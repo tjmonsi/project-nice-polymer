@@ -1,0 +1,31 @@
+<link rel="import" href="../../bower_components/app-storage/app-network-status-behavior.html">
+<script>
+  (() => {
+    'use strict';
+
+    Polymer.NiceAppBehaviorImpl = {
+
+      create() {
+        if (this.isEditable) {
+          this.editableNoteId = null;
+          this.$.editor.open();
+        }
+      },
+
+      signOut() {
+        if (this.$.auth) {
+          var self = this;
+          this.$.auth.signOut().then(function() {
+            self.$.toaster.show(`Goodbye!`)
+          }).catch(function(error) {
+            self.$.toaster.show(`Error ${error.message}!`)
+          });
+        }
+      }
+    };
+    Polymer.NiceAppBehavior = [
+      Polymer.AppNetworkStatusBehavior,
+      Polymer.NiceAppBehaviorImpl
+    ];
+  })();
+</script>

@@ -3,8 +3,8 @@
   "shell": "src/my-app.html",
   "fragments": [
     "src/pages/root-home.html",
-    "src/pages/infographic-list.html",
-    "src/pages/article-list.html",
-    "src/pages/article-editor.html"
+    "src/pages/infographics.html",
+    "src/pages/articles.html",
+    "src/pages/article-page.html"
   ]
 }

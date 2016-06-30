@@ -9,18 +9,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="impirt" href="../behaviors">
 
 <dom-module id="article-list">
 
   <template>
 
     <style>
-      
+      paper-fab {
+        position: absolute;
+        bottom: 1em;
+        right: 1em;
+      }
+
+      paper-fab.label {
+        font-size: 20px;
+      }
     </style>
 
-    <div>
-        Article List
-    </div>
+    <paper-fab
+      icon="add"
+      on-tap="create"
+      disabled="[[!online]]"
+      aria-label="Add note">
+    </paper-fab>
 
   </template>
 
@@ -28,7 +41,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     Polymer({
 
-      is: 'article-list'
+      is: 'article-list',
+
+      behaviors: [
+        Polymer.NiceAppBehavior
+      ],
+
+      create: function(e) {
+
+      }
 
     });
 

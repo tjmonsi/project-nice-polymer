@@ -1,0 +1,270 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="./behaviors">
+<link rel="import" href="./components/atoms">
+
+
+<dom-module id="nice-app">
+
+  <template>
+
+    <style>
+
+      :host {
+        display: block;
+        --app-primary-color: #4285f4;
+        --app-secondary-color: black;
+      }
+
+      app-header {
+        background-color: var(--app-primary-color);
+        color: #fff;
+      }
+      /*app-header paper-icon-button {*/
+      /*  --paper-icon-button-ink-color: white;*/
+      /*}*/
+
+      .drawer-list {
+        /*margin: 0 20px;*/
+      }
+      .drawer-list a {
+        display: block;
+        padding: 0 16px;
+        text-decoration: none;
+        color: var(--app-secondary-color);
+      }
+      .drawer-list a.iron-selected paper-item {
+        color: black;
+        font-weight: bold;
+      }
+      .drawer-list a.subroute {
+        padding-left: 32px;
+      }
+      .hidden {
+        display: none !important;
+      }
+
+      paper-tabs .link {
+        @apply(--layout-horizontal);
+        @apply(--layout-center-center);
+        color: inherit;
+        text-decoration: none;
+      }
+
+    </style>
+
+
+    <app-location route="{{route}}"></app-location>
+    <app-route
+        route="{{route}}"
+        pattern="/:page"
+        data="{{routeData}}"
+        tail="{{subroute}}">
+    </app-route>
+
+    <firebase-app-with-storage
+      api-key="AIzaSyBzGu9Aq0wiRaZ1IzXnDFw-h1nr4hW86yI"
+      auth-domain="project-nice-polymer.firebaseapp.com"
+      database-url="https://project-nice-polymer.firebaseio.com"
+      storage-bucket="project-nice-polymer.appspot.com">
+    </firebase-app>
+
+    <firebase-auth
+      id="auth"
+      provider="google"
+      signed-in="{{signedIn}}"
+      user="{{user}}">
+    </firebase-auth>
+
+    <app-scrollpos-control selected="{{page}}"></app-scrollpos-control>
+
+    <iron-media-query
+        query="[[_computeMediaQuery()]]"
+        on-query-matches-changed="_onQueryMatchesChanged"></iron-media-query>
+
+    <app-drawer-layout force-narrow fullbleed id="app-drawer">
+      <app-drawer >
+        <app-toolbar>N.I.C.E</app-toolbar>
+        <paper-menu attr-for-selected="name" selected="[[page]]" role="navigation" class="drawer-list">
+          <template is="dom-repeat" items="{{menuList}}">
+            <template is="dom-if" if="{{_checkMenuAuth(item.auth, user)}}">
+              <a href="{{item.href}}" name="{{item.name}}" tabindex="-1">
+                <paper-item>{{item.label}}</paper-item>
+              </a>
+            </template>
+          </template>
+        </paper-menu>
+
+      </app-drawer>
+
+      <app-header-layout has-scrolling-region>
+
+        <app-header condenses reveals effects="waterfall">
+          <app-toolbar>
+            <paper-icon-button icon="menu" drawer-toggle class$="{{showMenuButton}}"></paper-icon-button>
+            <div title>N.I.C.E</div>
+            <paper-tabs attr-for-selected="name" selected="[[page]]" role="navigation" class$="{{showHeaderMenu}}">
+              <template is="dom-repeat" items="{{menuList}}">
+                <template is="dom-if" if="{{_checkMenuAuth(item.auth, user)}}">
+                  <paper-tab name="{{item.name}}">
+                    <a href="{{item.href}}" class="link" tabindex="-1">
+                      {{item.label}}
+                    </a>
+                  </paper-tab>
+                </template>
+              </template>
+            </paper-tabs>
+            <paper-tabs no-bar selected="[[page]]" attr-for-selected="name">
+              <template is="dom-if" if="{{!user}}">
+                <paper-tab on-click="signIn">
+                  Login
+                </paper-tab>
+              </template>
+              <template is="dom-if" if="{{user}}">
+                <paper-tab on-tap="signOut">
+                  Logout
+                </paper-tab>
+              </template>
+            </paper-tabs>
+          </app-toolbar>
+        </app-header>
+
+        <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
+          <root-home name="root-home"></root-home>
+          <article-list name="articles"></article-list>
+          <infographic-list name="infographics"></infographic-list>
+        </iron-pages>
+
+      </app-header-layout>
+
+    </app-drawer-layout>
+    <paper-toast id="toaster"></paper-toast>
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'nice-app',
+
+      properties: {
+
+        page: {
+          type: String,
+          reflectToAttribute: true,
+          observer: '_pageChanged'
+        },
+
+      },
+
+      behaviors: [
+        Polymer.NiceAppBehavior
+      ],
+
+      ready: function() {
+        this.menuList = [
+          {
+            href: '/root-home',
+            label: 'Home',
+            name: 'root-home',
+            auth: false
+          },
+          {
+            href: '/articles',
+            label: 'Articles',
+            name: 'articles',
+            auth: false
+          },
+          {
+            href: '/infographs',
+            label: 'Infographs',
+            name: 'infographs',
+            auth: false
+          },
+          {
+            href: '/open-data',
+            label: 'Open Data',
+            name: 'open-data',
+            auth: false
+          },
+          {
+            href: '/dashboard',
+            label: 'Dashboard',
+            name: 'dashboard',
+            auth: true
+          },
+          {
+            href: '/profile',
+            label: 'Profile',
+            name: 'profile',
+            auth: true
+          }
+        ];
+      },
+
+
+      showHeaderMenu: '',
+      showMenuButton: '',
+
+      observers: [
+        '_routePageChanged(routeData.page)'
+      ],
+
+      _routePageChanged: function(page)  {
+        this.page = page || 'root-home';
+      },
+
+      _pageChanged: function(page) {
+        // load page import on demand.
+        var urlPage = page === 'root-home' ? 'root-home' : page;
+        this.importHref(
+          this.resolveUrl(`pages/${urlPage}.html`), null, null, true);
+      },
+
+      _onQueryMatchesChanged: function(e) {
+        this.showMenuButton = !e.detail.value ? 'hidden' : '';
+        this.showHeaderMenu = e.detail.value ? 'hidden' : '';
+      },
+
+      _computeMediaQuery: function() {
+        return '(max-width: ' + this.$$('#app-drawer').responsiveWidth + ')';
+      },
+
+      _checkMenuAuth: function(auth, user) {
+        return !auth || user;
+      },
+
+      signIn: function() {
+        var self = this;
+        this.$.auth.signInWithPopup().then(function(result) {
+          self.$.toaster.show(`Welcome ${result.user.displayName}!`);
+        }).catch(function(error){
+          console.log(error);
+          self.$.toaster.show(`Error: ${error.message}!`);
+        });
+      }
+
+    });
+
+  </script>
+
+</dom-module>
