@@ -80,6 +80,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         data="{{routeData}}"
         tail="{{subroute}}">
     </app-route>
+    <app-route
+        route="{{subroute}}"
+        pattern="/:pageId"
+        data="{{idrouteData}}"
+        tail="{{tailroute}}">
+    </app-route>
 
     <firebase-app-with-storage
       api-key="AIzaSyBzGu9Aq0wiRaZ1IzXnDFw-h1nr4hW86yI"
@@ -104,7 +110,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <app-drawer-layout force-narrow fullbleed id="app-drawer">
       <app-drawer >
         <app-toolbar>N.I.C.E</app-toolbar>
-        <paper-menu attr-for-selected="name" selected="[[page]]" role="navigation" class="drawer-list">
+        <paper-menu attr-for-selected="name" selected="{{page}}" role="navigation" class="drawer-list">
           <template is="dom-repeat" items="{{menuList}}">
             <template is="dom-if" if="{{_checkMenuAuth(item.auth, user)}}">
               <a href="{{item.href}}" name="{{item.name}}" tabindex="-1">
@@ -122,7 +128,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <app-toolbar>
             <paper-icon-button icon="menu" drawer-toggle class$="{{showMenuButton}}"></paper-icon-button>
             <div title>N.I.C.E</div>
-            <paper-tabs attr-for-selected="name" selected="[[page]]" role="navigation" class$="{{showHeaderMenu}}">
+            <paper-tabs attr-for-selected="name" selected="{{page}}" role="navigation" class$="{{showHeaderMenu}}">
               <template is="dom-repeat" items="{{menuList}}">
                 <template is="dom-if" if="{{_checkMenuAuth(item.auth, user)}}">
                   <paper-tab name="{{item.name}}">
@@ -148,11 +154,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </app-toolbar>
         </app-header>
 
-        <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
-          <root-home name="root-home"></root-home>
-          <article-list name="articles"></article-list>
-          <infographic-list name="infographics"></infographic-list>
+        <iron-pages id="pageLoader" role="main" selected="[[page]]" attr-for-selected="name">
+          <root-home name="root-home" user="{{user}}"></root-home>
+          <article-list
+            name="articles"
+            user="{{user}}"
+            page="{{page}}"
+            pageId="{{pageId}}">
+          </article-list>
+          <infographic-list name="infographics" user="{{user}}"></infographic-list>
+          <article-page
+            name="article"
+            user="{{user}}"
+            pageId="{{pageId}}">
+          </article-page>
         </iron-pages>
+
 
       </app-header-layout>
 
@@ -166,18 +183,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       is: 'nice-app',
 
-      properties: {
-
-        page: {
-          type: String,
-          reflectToAttribute: true,
-          observer: '_pageChanged'
-        },
-
-      },
-
       behaviors: [
         Polymer.NiceAppBehavior
+      ],
+
+      observers: [
+        '_routePageChanged(routeData.page)',
+        '_pageChanged(routeData.page)'
       ],
 
       ready: function() {
@@ -221,24 +233,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ];
       },
 
+      observers: [
+        '_routePageChanged(routeData.page)',
+        '_pageChanged(routeData.page)'
+      ],
+
 
       showHeaderMenu: '',
       showMenuButton: '',
-
-      observers: [
-        '_routePageChanged(routeData.page)'
-      ],
-
-      _routePageChanged: function(page)  {
-        this.page = page || 'root-home';
-      },
-
-      _pageChanged: function(page) {
-        // load page import on demand.
-        var urlPage = page === 'root-home' ? 'root-home' : page;
-        this.importHref(
-          this.resolveUrl(`pages/${urlPage}.html`), null, null, true);
-      },
 
       _onQueryMatchesChanged: function(e) {
         this.showMenuButton = !e.detail.value ? 'hidden' : '';
@@ -253,15 +255,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return !auth || user;
       },
 
-      signIn: function() {
-        var self = this;
-        this.$.auth.signInWithPopup().then(function(result) {
-          self.$.toaster.show(`Welcome ${result.user.displayName}!`);
-        }).catch(function(error){
-          console.log(error);
-          self.$.toaster.show(`Error: ${error.message}!`);
-        });
-      }
+      _routePageChanged: function(page)  {
+        console.log(page);
+        this.page = page || 'root-home';
+      },
+
+      _pageChanged: function(page) {
+        console.log(page, '1');
+        // load page import on demand.
+        var urlPage = page === 'root-home' ? 'root-home' : page;
+        this.importHref(
+          this.resolveUrl(`/src/pages/${urlPage}.html`), null, null, true);
+      },
 
     });
 

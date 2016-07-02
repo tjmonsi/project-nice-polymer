@@ -28,13 +28,33 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <paper-fab
-      icon="add"
-      on-tap="create"
-      disabled="[[!online]]"
-      aria-label="Add note">
-    </paper-fab>
+    <firebase-query
+      id="article-query"
+      path="[[niceArticlePath.articles]]"
+      data="{{articleList}}">
+    </firebase-query>
 
+    <template is="dom-repeat" items="{{articleList}}">
+      {{index}}
+      {{item.$key}}<br/>
+    </template>
+
+    <firebase-document
+        id="articleRef"
+        path="/">
+    </firebase-document>
+
+    <template is="dom-if" if="{{user}}">
+      <paper-fab
+        id="create-article-fab"
+        icon="add"
+        type="create-article"
+        on-tap="insertNew"
+        disabled="[[!online]]"
+        aria-label="Add Article">
+      </paper-fab>
+    </template>
+    <paper-toast id="articles-toaster"></paper-toast>
   </template>
 
   <script>
@@ -43,14 +63,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       is: 'article-list',
 
+      properties: {
+        articleList: {
+          type: Object,
+          reflectToAttribute: true
+        }
+      },
+
       behaviors: [
         Polymer.NiceAppBehavior
       ],
-
-      create: function(e) {
-
-      }
-
     });
 
   </script>

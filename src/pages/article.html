@@ -1,0 +1,168 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="impirt" href="../behaviors">
+
+<dom-module id="article-page">
+
+  <template>
+
+    <style is="custom-style" include="iron-flex iron-flex-alignment">
+      .article-editor-form {
+        padding: 20px;
+        padding-top: 0px;
+      }
+    </style>
+
+    <app-location route="{{route}}"></app-location>
+    <app-route
+      route="{{route}}"
+      pattern="/:page"
+      data="{{routeData}}"
+      tail="{{subroute}}">
+    </app-route>
+    <app-route
+      route="{{subroute}}"
+      pattern="/:pageId"
+      data="{{idrouteData}}"
+      tail="{{tailroute}}">
+    </app-route>
+
+    <firebase-document
+      id="articleRef"
+      path="[[documentPath]]"
+      data="{{articleData}}">
+    </firebase-document>
+
+    <firebase-storage
+      id="fileRef"
+      path="/files"
+      data="{{fileUpload}}"
+      uploadTask="{{uploadTask}}">
+    </firebase-storage>
+
+    <div class="layout horizontal">
+      <div class="flex article-editor-form">
+        <form is="iron-form" id="article-editor">
+          <paper-input
+            id="title"
+            name="title"
+            label="Title"
+            value="{{articleData.title}}"
+            max="100"
+            char-counter
+            >
+          </paper-input>
+          <paper-input
+            name="headerImage"
+            id="headerImage"
+            label="Header Image"
+            value="{{articleData.headerImage}}">
+          </paper-input>
+          <input
+            name="headerImageFileUpload"
+            placeholder="Upload it here"
+            type="file"
+            on-change="afterFileBrowse"
+            >
+          </input>
+          <hr/>
+
+          <paper-textarea
+            id="subTitle"
+            label="Short Description"
+            name="subTitle"
+            value="{{articleData.subTitle}}"
+            rows="2"
+            max="200"
+            char-counter>
+          </paper-textarea>
+          <paper-textarea
+            id="body"
+            label="Body"
+            name="body"
+            value="{{articleData.body}}"
+            rows="7"
+            char-counter>
+          </paper-textarea>
+        </form>
+      </div>
+      <div class="flex">
+        Hahaha
+      </div>
+    </div>
+
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'article-page',
+
+      properties: {
+        niceArticlePath: {
+          notify: true,
+          returnToAttribute: true
+        },
+        pageId: {
+          notify: true,
+          returnToAttribute: true
+        },
+        user: {
+          type: Object,
+          reflectToAttribute: true,
+          notify: true,
+          observer: 'checkUser'
+        },
+      },
+
+      ready() {
+        this.documentPath = `${this.niceArticlePath.articles}/${this.idrouteData.pageId}`;
+      },
+
+      behaviors: [
+        Polymer.NiceAppBehavior
+      ],
+
+      afterFileBrowse: function(e) {
+        if (e.target.files && e.target.files.length === 1) {
+          var self = this;
+          var file = e.target.files[0];
+          this.$.fileRef.data = file;
+          this.$.fileRef.save().then(function(result){
+            console.log(result.snapshot.downloadURL)
+            console.log(self.$)
+            self.$.headerImage.value = result.snapshot.downloadURL;
+          }).catch(function(error) {
+            console.log(error);
+          });
+        }
+      }
+      // ready() {
+      //   this.arrayList = [
+      //     {name: 'TJ'},
+      //     {name: 'T2'},
+      //     {name: 'T3'},
+      //   ]
+
+      //   var self = this;
+
+      //   setInterval(function() {
+      //     self.push('arrayList', {name: 'T1'})
+      //   }, 1000)
+      // },
+
+    });
+
+  </script>
+
+</dom-module>

@@ -1,15 +1,89 @@
 <link rel="import" href="../../bower_components/app-storage/app-network-status-behavior.html">
 <script>
-  (() => {
+  (function(){
     'use strict';
 
     Polymer.NiceAppBehaviorImpl = {
 
-      create() {
-        if (this.isEditable) {
-          this.editableNoteId = null;
-          this.$.editor.open();
+      properties: {
+        editableArticleId: {
+          type: String,
+          notify: true
+        },
+        user: {
+          type: Object,
+          reflectToAttribute: true,
+          notify: true,
+          observer: 'checkUser'
+        },
+        page: {
+          type: String,
+          notify: true,
+        },
+        pageId: {
+          type: String,
+          notify: true
+        },
+      },
+
+      ready() {
+        this.isEditable = this.user && this.online;
+
+        var articleGroup = 'article_group';
+
+        this.niceArticlePath = {
+          articles: `/${articleGroup}/articles`
+        };
+      },
+
+      checkUser(user) {
+        this.isEditable = user && this.online;
+      },
+
+      gotoPage(page, pageId = '', name = 'New Window') {
+        var self = this;
+        if (window.history && window.history.pushState) {
+          window.history.pushState({}, name, `/${page}/${pageId}`);
+          self.page = page;
+          self.pageId = pageId;
+          self.importHref(
+            self.resolveUrl(`/src/pages/${page}.html`), null, null, true);
+        } else {
+          window.location.href = `/${page}/${pageId}`;
         }
+      },
+
+      insertNew(e) {
+        var fab = this.$$("#create-article-fab");
+        var self = this;
+
+        if (self.isEditable) {
+          fab.setAttribute('disabled', true);
+          if (fab.getAttribute('type') === 'create-article') {
+            self.$.articleRef.data = {title: '', body: ''};
+            console.log(self.niceArticlePath);
+            self.$.articleRef.save(self.niceArticlePath.articles).then(function(){
+              fab.removeAttribute('disabled');
+              self.$['articles-toaster'].show(`Creating a new article`);
+              var path = self.$.articleRef.path.split('/');
+              self.gotoPage('article', path[path.length-1], 'New Article');
+            }).catch(function(error) {
+              console.log(error);
+              self.$['articles-toaster'].show(`Error ${error.message}`);
+              fab.removeAttribute('disabled')
+            });
+          }
+        }
+      },
+
+      signIn() {
+        var self = this;
+        this.$.auth.signInWithPopup().then(function(result) {
+          self.$.toaster.show(`Welcome ${result.user.displayName}!`);
+        }).catch(function(error){
+          console.log(error);
+          self.$.toaster.show(`Error: ${error.message}!`);
+        });
       },
 
       signOut() {

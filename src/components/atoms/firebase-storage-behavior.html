@@ -1,0 +1,102 @@
+<link rel="import" href="../../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../../bower_components/app-storage/app-storage-behavior.html">
+<link rel="import" href="../../../bower_components/polymerfire/firebase-common-behavior.html">
+<link rel="import" href="../../../bower_components/polymerfire/firebase.html">
+<script>
+  (function() {
+    'use strict';
+
+    /** @polymerBehavior Polymer.FirebaseDatabaseBehavior */
+    Polymer.FirebaseStorageBehaviorImpl = {
+      properties: {
+        storageDb: {
+          type: Object,
+          computed: '__computeStorageDb(app)'
+        },
+
+        ref: {
+          type: Object,
+          computed: '__computeRef(db, path)'
+        },
+
+        /**
+         * Path to a Firebase root or endpoint. N.B. `path` is case sensitive.
+         */
+        path: {
+          type: String,
+          observer: '__pathChanged',
+          value: null
+        }
+      },
+
+      observers: [
+        '__onlineChanged(online)'
+      ],
+
+      _setFirebaseValue: function(path, value) {
+        this._log('Setting Firebase value at', path, 'to', value);
+        if (value) {
+          var uploadTask = this.storageDb.ref(path).put(value);
+          return uploadTask;
+        } else {
+          return this.storageDb.ref(path).delete();
+        }
+
+        // var key = value && value.$key;
+        // if (key) {
+        //   value.$key = null;
+        // }
+        // var result = this.db.ref(path).set(value);
+        // if (key) {
+        //   value.$key = key;
+        // }
+        // return result;
+      },
+
+      __computeStorageDb: function(app) {
+        return app ? app.storage() : null;
+      },
+
+      __computeRef: function(db, path) {
+        if (this.ref) {
+          this.ref.off();
+        }
+
+        if (db == null ||
+            path == null ||
+            path.split('/').slice(1).indexOf('') >= 0) {
+          return null;
+        }
+
+        return db.ref(path);
+      },
+
+      __pathChanged: function(path, oldPath) {
+        if (oldPath != null) {
+          this.syncToMemory(function() {
+            this.data = this.zeroValue;
+          });
+        }
+      },
+
+      __onlineChanged: function(online) {
+        if (!this.ref) {
+          return;
+        }
+
+        if (online) {
+          this.db.goOnline();
+        } else {
+          this.db.goOffline();
+        }
+      }
+    };
+
+    /** @polymerBehavior */
+    Polymer.FirebaseStorageBehavior = [
+      Polymer.AppStorageBehavior,
+      Polymer.FirebaseCommonBehavior,
+      Polymer.FirebaseStorageBehaviorImpl
+    ];
+  })();
+</script>
