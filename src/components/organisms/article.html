@@ -8,19 +8,77 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 
-<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../../bower_components/polymer/polymer.html">
 
 
 <dom-module id="article-item">
 
   <template>
 
-    <style>
+    <style is="custom-style" include="iron-flex iron-flex-alignment">
+      :host {
+        width: 100%;
+      }
+      :host .article-banner {
+        position: relative;
+      }
+      :host .article-banner .title {
+        position: absolute;
+        top: 40px;
+        width: 100%;
+        text-align: center;
+        color: white;
+      }
+      :host .article-banner .title .sub-title {
+        width: 100%;
+        text-align: center;
+        color: white;
+      }
+      :host .article-banner .title h1 {
 
+      }
+      :host .article-banner iron-image {
+        position: relative;
+        width: 100%;
+        height: 300px;
+        background-color: black;
+      }
+      :host .article-banner .banner-overlay {
+        position: absolute;
+        width: 100%;
+        height: 300px;
+        opacity: 0.5;
+        top: 0px;
+        background-color: black;
+      }
     </style>
 
-    <div>
+    <div class="article-item">
+      <div class="article-banner">
 
+        <iron-image
+          src="{{article.headerImage}}"
+          sizing="cover"
+          preload
+          fade>
+        </iron-image>
+        <div class="banner-overlay">
+        </div>
+        <div class="title">
+          <h1>{{article.title}}</h1>
+          <div class="sub-title">
+            {{article.subTitle}}
+          </div>
+        </div>
+      </div>
+      <div class="">
+
+      </div>
+      <div class="article-body">
+        <marked-element markdown="{{article.body}}">
+          <div class="markdown-html"></div>
+        </marked-element>
+      </div>
     </div>
 
   </template>
@@ -29,7 +87,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     Polymer({
 
-      is: 'article-item'
+      is: 'article-item',
+
+      properties: {
+        article: {
+          type: Object,
+          reflectToAttribute: true
+        }
+      }
 
     });
 

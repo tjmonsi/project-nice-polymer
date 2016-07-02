@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../components/organisms/article.html">
 <link rel="impirt" href="../behaviors">
 
 <dom-module id="article-page">
@@ -20,6 +21,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         padding: 20px;
         padding-top: 0px;
       }
+
+      paper-spinner {
+         width: 100px;
+         height: 100px;
+         --paper-spinner-stroke-width: 6px;
+      }
+
     </style>
 
     <app-location route="{{route}}"></app-location>
@@ -35,6 +43,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       data="{{idrouteData}}"
       tail="{{tailroute}}">
     </app-route>
+    <app-route
+      route="{{tailroute}}"
+      pattern="/:action"
+      data="{{tailrouteData}}">
+    </app-route>
 
     <firebase-document
       id="articleRef"
@@ -49,58 +62,74 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       uploadTask="{{uploadTask}}">
     </firebase-storage>
 
-    <div class="layout horizontal">
-      <div class="flex article-editor-form">
-        <form is="iron-form" id="article-editor">
-          <paper-input
-            id="title"
-            name="title"
-            label="Title"
-            value="{{articleData.title}}"
-            max="100"
-            char-counter
-            >
-          </paper-input>
-          <paper-input
-            name="headerImage"
-            id="headerImage"
-            label="Header Image"
-            value="{{articleData.headerImage}}">
-          </paper-input>
-          <input
-            name="headerImageFileUpload"
-            placeholder="Upload it here"
-            type="file"
-            on-change="afterFileBrowse"
-            >
-          </input>
-          <hr/>
+    <template is="dom-if" if="{{articleData.title}}">
+      <div class="layout horizontal wrap">
+        <template is="dom-if" if="{{editFlag}}">
+          <div class="flex article-editor-form">
+            <form is="iron-form" id="article-editor">
+              <paper-input
+                id="title"
+                name="title"
+                label="Title"
+                value="{{articleData.title}}"
+                max="100"
+                char-counter
+                >
+              </paper-input>
+              <paper-input
+                name="headerImage"
+                id="headerImage"
+                label="Header Image"
+                value="{{articleData.headerImage}}">
+              </paper-input>
+              <input
+                name="headerImageFileUpload"
+                placeholder="Upload it here"
+                type="file"
+                on-change="afterFileBrowse"
+                >
+              </input>
+              <hr/>
 
-          <paper-textarea
-            id="subTitle"
-            label="Short Description"
-            name="subTitle"
-            value="{{articleData.subTitle}}"
-            rows="2"
-            max="200"
-            char-counter>
-          </paper-textarea>
-          <paper-textarea
-            id="body"
-            label="Body"
-            name="body"
-            value="{{articleData.body}}"
-            rows="7"
-            char-counter>
-          </paper-textarea>
-        </form>
-      </div>
-      <div class="flex">
-        Hahaha
-      </div>
-    </div>
+              <paper-textarea
+                id="subTitle"
+                label="Short Description"
+                name="subTitle"
+                value="{{articleData.subTitle}}"
+                rows="2"
+                max="200"
+                char-counter>
+              </paper-textarea>
+              <paper-textarea
+                id="body"
+                label="Body"
+                name="body"
+                value="{{articleData.body}}"
+                rows="7"
+                char-counter>
+              </paper-textarea>
+            </form>
+          </div>
+        </template>
 
+        <div class="flex" style="min-width: 400px">
+          <article-item article=[[articleData]]></article-item>
+        </div>
+      </div>
+
+    </template>
+    <template is="dom-if" if="{{!articleData.title}}">
+      <div class="horizontal layout">
+        <div class="flex"></div>
+        <div class="center flex" style="margin-top: 200px; text-align: center">
+          <paper-spinner alt="Loading article" active></paper-spinner>
+        </div>
+        <div class="flex"></div>
+      </div>
+
+    </template>
   </template>
+
 
   <script>
 
@@ -123,15 +152,33 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           notify: true,
           observer: 'checkUser'
         },
+        // editFlag: {
+        //   type: Boolean,
+        //   readOnly: true,
+        //   notify: true,
+        //   reflectToAttribute: true
+        // }
       },
+
+      observers: [
+        'checkIfEdit(user, tailrouteData.action)'
+      ],
+
+      behaviors: [
+        Polymer.NiceAppBehavior
+      ],
 
       ready() {
         this.documentPath = `${this.niceArticlePath.articles}/${this.idrouteData.pageId}`;
       },
 
-      behaviors: [
-        Polymer.NiceAppBehavior
-      ],
+      checkIfEdit(user, action) {
+        // change to check if admin, owner or editor
+        this.editFlag =
+          action &&
+          action === 'edit' &&
+          user
+      },
 
       afterFileBrowse: function(e) {
         if (e.target.files && e.target.files.length === 1) {
