@@ -17,9 +17,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <style>
       
     </style>
+    
+    <firebase-document
+      path="/person"
+      data="{{person}}"
+      id="documentkillme"
+      zero-value="false"
+      >
+    </firebase-document>
+
 
     <div>
         Infographic List
+        {{person.name}}
+        <paper-input label="name" name="name" value="[[person.name]]" on-change="changeInput"></paper-input>
+        <paper-input label="age" name="age" value="[[person.age]]" on-change="changeInput" pattern="-?[0-9]*(\.[0-9]+)?"></paper-input>
+        <paper-input label="aha" name="haha" value="[[person.haha]]" on-change="changeInput"></paper-input>
     </div>
 
   </template>
@@ -28,7 +41,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     Polymer({
 
-      is: 'infographic-list'
+      is: 'infographic-list',
+      ready: function() {
+        console.log(this)
+        console.log(this.total)
+        console.log(this.$$("#documentkillme"))
+        var documentkillme = this.$$("#documentkillme")
+        // setTimeout(function() {
+        //   documentkillme.destroy();
+        // }, 5000)
+      },
+      changeInput: function(e) {
+        console.log(e.target.name)
+        console.log(e.target.value)
+        var documentkillme = this.$$("#documentkillme");
+        console.log(e.target.value.trim);
+        console.log(e.target.value.trim() === '');
+        console.log(e.target.value.trim().length)
+        console.log(e.target.value.trim().length == 0 ? true : false)
+        console.log(e.target.validate())
+        
+        if (e.target.validate()) documentkillme.setStoredValue('/person/' + e.target.name, e.target.value.trim().length == 0 ? null : e.target.value.trim())
+
+      }
 
     });
 

@@ -1,0 +1,137 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material-shared-styles.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../bower_components/paper-styles/shadow.html">
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<dom-module id="article-list">
+
+  <template>
+    <style is="custom-style" include="paper-material-shared-styles">
+      .author { 
+        color: var(--paper-grey-600); 
+        margin: 10px 0; 
+      }
+      .titleEditor {
+        width: 100%;
+      }
+      h1 {
+        margin: 0px;
+      }
+      .flex {
+        @apply(--layout-horizontal);
+      }
+      .flex-end-align {
+        @apply(--layout-horizontal);
+        @apply(--layout-end);
+      }
+    </style>
+
+    <div>
+        Article List
+    </div>
+    
+    <paper-card>
+      <div class="container flex">
+        <div hidden={{titleEditing}} class="titleEditor">
+          <h1>
+            {{title}}
+          </h1>
+        </div>
+        <paper-textarea class="titleEditor" hidden="{{!titleEditing}}" label="Article Editor" value="{{title}}"></paper-textarea>
+        <div class="container flex-end-align">
+          <paper-fab hidden={{titleEditing}}  icon="icons:create" on-tap="titleEdit" mini></paper-fab>
+          <paper-fab hidden={{!titleEditing}} icon="icons:done"   on-tap="titleEdit" mini></paper-fab>
+        </div>
+        
+      </div>
+      <div class="card-content">
+        <div hidden="{{editing}}">{{article}}</div>
+        <paper-textarea hidden="{{!editing}}" label="Article Editor" value="{{article}}"></paper-textarea>
+        <paper-item class="rate-name author">{{user}}</paper-item>
+        <paper-item>{{time}}</paper-item>
+      </div>
+      <div class="card-actions">
+        <paper-fab hidden={{editing}}  icon="icons:create" on-tap="doEdit" mini></paper-fab>
+        <paper-fab hidden={{!editing}} icon="icons:done"   on-tap="doEdit" mini></paper-fab>
+      </div>
+    </paper-card>
+    
+    <paper-card heading={{title}}>
+      <div class="card-content">
+        <div hidden="{{editing}}">{{article}}</div>
+        <paper-textarea hidden="{{!editing}}" label="Article Editor" value="{{article}}"></paper-textarea>
+        <paper-item class="author">{{user}}</paper-item>
+        <paper-item>{{time}}</paper-item>
+      </div>
+      <div class="card-actions">
+        <paper-fab hidden={{editing}}  icon="icons:create" on-tap="doEdit" mini></paper-fab>
+        <paper-fab hidden={{!editing}} icon="icons:done"   on-tap="doEdit" mini></paper-fab>
+      </div>
+    </paper-card>
+    
+    <paper-material elevation="5">5</paper-material>
+
+
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'article-list',
+      properties: {
+        title:{
+          type: String,
+          value: "Simple"
+        },
+        article: {
+          type: String,
+          value: ""
+        },
+        // declare properties for the element's public API
+        user: {
+            type: String,
+            value: "No Name"   
+        },
+        time: {
+            type: String,
+            value: new Date().toLocaleString()
+        },
+        editing: {
+            type: Boolean,
+            value: false    
+        },
+        titleEditing: {
+          type: Boolean,
+          value: false
+        }
+      },
+      doEdit: function(e){
+          this.editing=!this.editing;
+      },
+      titleEdit: function(e){
+          this.titleEditing=!this.titleEditing;
+      }
+    });
+
+  </script>
+
+</dom-module>

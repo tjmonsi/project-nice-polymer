@@ -8,23 +8,24 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/app-route/app-location.html">
-<link rel="import" href="../bower_components/app-route/app-route.html">
-<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
-<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
-<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
-<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
-<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
-<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
-<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
-<link rel="import" href="./libs/my-icons.html">
-
+<link rel="import" href="components/index.html">
+ 
 <dom-module id="my-app">
 
-  <template>
-
+  <template id="app">
+    <firebase-app 
+      auth-domain="maindb-20e62.firebaseapp.com"
+      database-url="https://maindb-20e62.firebaseio.com"
+      api-key="AIzaSyBBpLXglM9SsEupD5adgM8ka4p9x5wl1V0"
+      >
+    </firebase-app>
+    <firebase-auth id="auth" user="{{user}}" provider="google" on-error="showError"></firebase-auth>
+    <firebase-document 
+      id="base" 
+      path="/articles" 
+      data="{{test}}"
+    >
+    </firebase-document>
     <style>
 
       :host {
@@ -58,6 +59,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .drawer-list a.subroute {
         padding-left: 32px;
       }
+      button[is=paper-icon-button-light] > img {
+        width: 24px;
+        height: 24px;
+      }
 
 
     </style>
@@ -87,6 +92,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <app-toolbar>
             <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
             <div title>N.I.C.E</div>
+            <paper-icon-button icon="note-add" hidden$="{{!user}}" onclick="newArticle.open()"></paper-icon-button>
+            <paper-icon-button icon="power-settings-new" hidden$="{{user}}" on-tap="signInWithGoogle"></paper-icon-button>
+            <paper-icon-button icon="power-settings-new" hidden=true onclick="login.open()"></paper-icon-button>
+            <paper-icon-button icon="power-settings-new" hidden$="{{!user}}" on-tap="signOut"></paper-icon-button>
           </app-toolbar>
         </app-header>
 
@@ -99,8 +108,48 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </app-header-layout>
 
     </app-drawer-layout>
+  
+  <paper-dialog id="newArticle">
+    <paper-toggle-button id="published" noink>Publish</paper-toggle-button>
+    <paper-input id="title" label="Article Title" name="title" value""></paper-input>
+    <paper-textarea id="text" label="Article Text" name="text" value"" ></paper-textarea>
+    <paper-button on-tap="addArticle" >Create</paper-button>
+    <paper-button onclick="newArticle.close()" >Cancel</paper-button>
+  </paper-dialog>
+  
+  <paper-dialog id="login">
+      <div class="error" hidden$="{{!error}}">{{error.code}}: {{error.message}}</div>
+      <div hidden$="{{user}}">
+        <h3>Email/Password</h3>
+        <form on-submit="signInWithEmailAndPassword">
+          <input value="{{email::input}}" type="email" placeholder="Email">
+          <input value="{{password::input}}" type="password" placeholder="Password">
+          <button type="submit" on-tap="signInWithEmailAndPassword">Sign In</button>
+          <button type="button" on-tap="createUserWithEmailAndPassword">Sign Up</button>
+        </form>
+        <p>
+          <paper-icon-button icon="perm-identity" on-tap="signInAnonymously"></paper-icon-button>
+          <button is="paper-icon-button-light" title="google+">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/1024px-Google_%22G%22_Logo.svg.png" alt="google+">
+          </button>
+          <button is="paper-icon-button-light" title="octocat">
+            <img src="https://assets-cdn.github.com/images/modules/logos_page/Octocat.png" alt="octocat">
+          </button>
+        </p>
+      </div>
+      <div hidden$="{{!user}}">
+        <table>
+          <tr><th>uid</th> <td>{{user.uid}}</td></tr>
+          <tr><th>displayName</th> <td>{{user.displayName}}</td></tr>
+          <tr><th>email</th> <td>{{user.email}}</td></tr>
+          <tr><th>emailVerified</th> <td>{{user.emailVerified}}</td></tr>
+        </table>
 
+        <button on-tap="signOut">Sign Out</button>
+      </div>
+  </paper-dialog>
   </template>
+  
 
   <script>
 
@@ -115,9 +164,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           reflectToAttribute: true,
           observer: '_pageChanged'
         },
-
+        
+        user: {
+          type: Object,
+          value: null
+        },
+        
+        error: {
+          type: Object,
+          value: null
+        },
+        
+        articles: {
+          type: Object,
+          value: null
+        }
+        
       },
-
+      
       observers: [
         '_routePageChanged(routeData.page)'
       ],
@@ -134,9 +198,64 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
       
       ready: function() {
+        console.log("fuck you chrome")
+      },
+      
+      showError: function(e) {
+        this.error = e.detail;
+      },
+      
+      signInAnonymously: function() {
+        this.error = null;
+        this.$.auth.signInAnonymously();
+      },
+      
+      signInWithGoogle: function() {
+        this.error = null;
+        this.$.auth.signInWithPopup();
+      },
+      
+      signInWithEmailAndPassword: function(e) {
+        if (e) { e.preventDefault(); }
+        this.error = null;
+        this.$.auth.signInWithEmailAndPassword(this.email, this.password);
+        this.email = null;
+        this.password = null;
+      },
+      
+      createUserWithEmailAndPassword: function() {
+        this.error = null;
+        this.$.auth.createUserWithEmailAndPassword(this.email, this.password);
+        this.$.firebaseLogin.createUser(this.email, this.password);
+        this.email = null;
+        this.password = null;
+      },
+      
+      signOut: function() {
+        this.error = null;
+        this.$.auth.signOut();
+      },
+      
+      addArticle: function() {
+        console.log("Fuck you chrome");
         
-      }
+        var test = this.$.base.push({
+          title: this.$.title.value,
+          content: this.$.text.vale,
+          user: {
+            uid: this.$.uid
+          },
+          date: new Date()
+        });
+        
+        console.log(test);
+        
+        this.$.title.value = '';
+        this.$.text.value= '';
+      },
 
+      
+      
     });
 
   </script>
