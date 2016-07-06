@@ -22,7 +22,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <firebase-auth id="auth" user="{{user}}" provider="google" on-error="showError"></firebase-auth>
     <firebase-document 
       id="base" 
-      path="/articles" 
+      path="/articles/temp" 
       data="{{test}}"
     >
     </firebase-document>
@@ -63,6 +63,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         width: 24px;
         height: 24px;
       }
+      paper-dialog-scrollable {
+        width: 100%;
+        height: 80%;
+      }
 
 
     </style>
@@ -77,8 +81,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <app-drawer-layout force-narrow fullbleed>
   
-      <app-drawer >
+      <app-drawer id="draft" align="right" swipe-open>
+        <app-toolbar>Drafts</app-toolbar>
+        <paper-dialog-scrollable>
+          <!--
+          <firebase-query
+            id="query"
+            path="/articles/drafted"
+            data="{{drafting}}"
+            order-by-child="uid"
+            equal-to={{user.uid}}
+          >  
+          </firebase-query>
+          
+          <template is="dom-repeat" items="{{drafting}}">
+            <a>{{item.title}}</a><br>  
+          </template>
+          -->
+
+       </paper-dialog-scrollable>
+      </app-drawer>
+      
+      <app-drawer id="navi">
         <app-toolbar>N.I.C.E</app-toolbar>
+        
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
           <a name="root-home" href="/">Home</a>
           <a name="articles" href="/articles">Articles</a>
@@ -90,8 +116,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <app-header condenses reveals effects="waterfall">
           <app-toolbar>
-            <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
+            <paper-icon-button icon="menu" onclick="navi.toggle()"></paper-icon-button>
             <div title>N.I.C.E</div>
+            <paper-icon-button icon="drafts" hidden$="{{!user}}" onclick="draft.toggle()"></paper-icon-button>
             <paper-icon-button icon="note-add" hidden$="{{!user}}" onclick="newArticle.open()"></paper-icon-button>
             <paper-icon-button icon="power-settings-new" hidden$="{{user}}" on-tap="signInWithGoogle"></paper-icon-button>
             <paper-icon-button icon="power-settings-new" hidden=true onclick="login.open()"></paper-icon-button>
@@ -100,7 +127,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </app-header>
 
         <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
-          <root-home name="root-home"></root-home>
+          <root-home name="root-home" user="{{user}}" ></root-home>
           <article-list name="articles"></article-list>
           <infographic-list name="infographics"></infographic-list>
         </iron-pages>
@@ -108,9 +135,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </app-header-layout>
 
     </app-drawer-layout>
-  
+    
   <paper-dialog id="newArticle">
-    <paper-toggle-button id="published" noink>Publish</paper-toggle-button>
+    <paper-toggle-button id="published" noink >Publish</paper-toggle-button>
     <paper-input id="title" label="Article Title" name="title" value""></paper-input>
     <paper-textarea id="text" label="Article Text" name="text" value"" ></paper-textarea>
     <paper-button on-tap="addArticle" >Create</paper-button>
@@ -140,6 +167,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <div hidden$="{{!user}}">
         <table>
           <tr><th>uid</th> <td>{{user.uid}}</td></tr>
+          <paper-input id="specialUID" name="UID" hidden=true value="{{user.uid}}"></paper-input>
           <tr><th>displayName</th> <td>{{user.displayName}}</td></tr>
           <tr><th>email</th> <td>{{user.email}}</td></tr>
           <tr><th>emailVerified</th> <td>{{user.emailVerified}}</td></tr>
@@ -167,7 +195,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         
         user: {
           type: Object,
-          value: null
+          notify: true,
+          reflectToAttribute: true
         },
         
         error: {
@@ -198,7 +227,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
       
       ready: function() {
-        console.log("fuck you chrome")
       },
       
       showError: function(e) {
@@ -237,23 +265,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
       
       addArticle: function() {
-        console.log("Fuck you chrome");
         
-        var test = this.$.base.push({
+        this.$.base.data = {
           title: this.$.title.value,
-          content: this.$.text.vale,
-          user: {
-            uid: this.$.uid
-          },
-          date: new Date()
-        });
+          context: this.$.text.value,
+          uid: this.$.specialUID.value
+        };
         
-        console.log(test);
+        if(this.$.published.checked){
+          this.$.base.save("/articles/published");  
+        }else{
+          this.$.base.save("/articles/drafted");
+        }
+        this.$.base.reset();
         
         this.$.title.value = '';
         this.$.text.value= '';
-      },
-
+        this.$.published.checked = false;
+      }
       
       
     });
