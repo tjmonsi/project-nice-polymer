@@ -116,13 +116,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <app-header condenses reveals effects="waterfall">
           <app-toolbar>
-            <paper-icon-button icon="menu" onclick="navi.toggle()"></paper-icon-button>
+            
+            <template is="dom-if" if="{{checkUser(user)}}">
+              <paper-icon-button icon="menu" on-tap="naviToggle"></paper-icon-button>
+            </template>
+            
             <div title>N.I.C.E</div>
-            <paper-icon-button icon="drafts" hidden$="{{!user}}" on-click="draftOpen"></paper-icon-button>
-            <paper-icon-button icon="note-add" hidden$="{{!user}}" on-click="newArticle.open()"></paper-icon-button>
-            <paper-icon-button icon="power-settings-new" hidden$="{{user}}" on-tap="signInWithGoogle"></paper-icon-button>
-            <paper-icon-button icon="power-settings-new" hidden=true onclick="login.open()"></paper-icon-button>
-            <paper-icon-button icon="power-settings-new" hidden$="{{!user}}" on-tap="signOut"></paper-icon-button>
+            
+            <template is="dom-if" if="{{!checkUser(user)}}">
+              <paper-icon-button icon="power-settings-new" on-tap="signInWithGoogle"></paper-icon-button>
+            </template>
+            <!--
+            <paper-icon-button icon="power-settings-new" hidden=true on-click="loginOpen"></paper-icon-button>
+            -->
+            <template is="dom-if" if="{{checkUser(user)}}">
+              <paper-icon-button icon="drafts" on-tap="draftOpen"></paper-icon-button>
+              <paper-icon-button icon="note-add" on-tap="newArticle.open()"></paper-icon-button>
+              <paper-icon-button icon="power-settings-new" on-tap="signOut"></paper-icon-button>
+            </template>
+            
           </app-toolbar>
         </app-header>
 
@@ -136,7 +148,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     </app-drawer-layout>
     
-  <paper-dialog id="newArticle">
+  <paper-dialog id="newArticle" with-backdrop>
     <paper-toggle-button id="published" noink >Publish</paper-toggle-button>
     <paper-input id="title" label="Article Title" name="title" value""></paper-input>
     <paper-textarea id="text" label="Article Text" name="text" value"" ></paper-textarea>
@@ -144,7 +156,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <paper-button onclick="newArticle.close()" >Cancel</paper-button>
   </paper-dialog>
   
-  <paper-dialog id="login">
+  <paper-dialog id="login" with-backdrop>
       <div class="error" hidden$="{{!error}}">{{error.code}}: {{error.message}}</div>
       <div hidden$="{{user}}">
         <h3>Email/Password</h3>
@@ -193,15 +205,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           observer: '_pageChanged'
         },
         
+        error: {
+          type: Object,
+          value: null
+        },
+        
         user: {
           type: Object,
           notify: true,
           reflectToAttribute: true
-        },
-        
-        error: {
-          type: Object,
-          value: null
         },
         
         articles: {
@@ -233,22 +245,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.error = e.detail;
       },
       
-      signInAnonymously: function() {
-        this.error = null;
-        this.$.auth.signInAnonymously();
-      },
-      
-      signInWithGoogle: function() {
-        this.error = null;
-        this.$.auth.signInWithPopup();
-      },
-      
-      signInWithEmailAndPassword: function(e) {
-        if (e) { e.preventDefault(); }
-        this.error = null;
-        this.$.auth.signInWithEmailAndPassword(this.email, this.password);
-        this.email = null;
-        this.password = null;
+      loginOpen: function() {
+        this.$$("#login").open();
       },
       
       createUserWithEmailAndPassword: function() {
@@ -257,12 +255,38 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.firebaseLogin.createUser(this.email, this.password);
         this.email = null;
         this.password = null;
+        location.reload();
+      },
+      
+      signInAnonymously: function() {
+        this.error = null;
+        this.$.auth.signInAnonymously();
+        location.reload();
+      },
+      
+      signInWithGoogle: function() {
+        this.error = null;
+        this.$.auth.signInWithPopup().then(function(){
+          location.reload();
+        });
+        //window.location.reload();
+      },
+      
+      signInWithEmailAndPassword: function(e) {
+        if (e) { e.preventDefault(); }
+        this.error = null;
+        this.$.auth.signInWithEmailAndPassword(this.email, this.password);
+        this.email = null;
+        this.password = null;
+        location.reload();
       },
       
       signOut: function() {
         this.error = null;
         this.$.auth.signOut();
+        location.reload();
       },
+      
       
       addArticle: function() {
         
@@ -286,7 +310,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       
       draftOpen: function() {
         this.$$("#draft").open();
-      }
+      },
+      
+      naviToggle: function() {
+        this.$$("#navi").toggle();
+      },
+      
+      checkUser: function(userId) {
+        return !!userId;
+      },
+      
       
       
     });
