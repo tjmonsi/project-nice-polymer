@@ -118,8 +118,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <app-toolbar>
             <paper-icon-button icon="menu" onclick="navi.toggle()"></paper-icon-button>
             <div title>N.I.C.E</div>
-            <paper-icon-button icon="drafts" hidden$="{{!user}}" onclick="draft.toggle()"></paper-icon-button>
-            <paper-icon-button icon="note-add" hidden$="{{!user}}" onclick="newArticle.open()"></paper-icon-button>
+            <paper-icon-button icon="drafts" hidden$="{{!user}}" on-click="draftOpen"></paper-icon-button>
+            <paper-icon-button icon="note-add" hidden$="{{!user}}" on-click="newArticle.open()"></paper-icon-button>
             <paper-icon-button icon="power-settings-new" hidden$="{{user}}" on-tap="signInWithGoogle"></paper-icon-button>
             <paper-icon-button icon="power-settings-new" hidden=true onclick="login.open()"></paper-icon-button>
             <paper-icon-button icon="power-settings-new" hidden$="{{!user}}" on-tap="signOut"></paper-icon-button>
@@ -282,6 +282,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.title.value = '';
         this.$.text.value= '';
         this.$.published.checked = false;
+      },
+      
+      draftOpen: function() {
+        this.$$("#draft").open();
       }
       
       
