@@ -13,23 +13,118 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <dom-module id="article-list">
 
   <template>
-
-    <style>
-      
+    
+    <style is="custom-style">
+      .flex {
+        @apply(--layout-horizontal);
+      }
+      .article-list {
+      }
     </style>
-
-    <div>
-        Article List
-    </div>
-
+    
+    <iron-flex-layout class="container flex">
+      <div class="article-list">
+        <firebase-query
+          id="query"
+          path="/articles/published"
+          data="{{publishing}}"
+          order-by-child="uid"
+          equal-to={{user.uid}}
+        >  
+        </firebase-query>
+        
+        <template is="dom-repeat" items="{{publishing}}">
+          
+          <paper-card heading="{{item.title}}">
+            <div class="card-content">
+              {{item.context}}
+              {{item.$key}}
+            </div>
+            <div class="card-actions">
+              <paper-button>Share</paper-button>
+              <paper-button>Explore!</paper-button>
+            </div>
+          </paper-card>
+          
+        </template>        
+      </div>
+      
+      <div class="article-list">
+        <firebase-query
+          id="query"
+          path="/articles/drafted"
+          data="{{drafting}}"
+          order-by-child="uid"
+          equal-to={{user.uid}}
+        >  
+        </firebase-query>
+        
+        <template is="dom-repeat" items="{{drafting}}">
+          
+      
+          <div>
+            <paper-input label="Title" name="title" value="{{item.title}}" on-change="changeInput"></paper-input>
+            <paper-input label="context" name="context" value="{{item.context}}" on-change="changeInput"></paper-input>
+            <paper-input label="userId" name="userId" value="[[item.$key]]" on-change="changeInput"></paper-input>
+          </div>
+          
+          <!--
+          
+          <paper-card id=Heading{{index}} heading="{{item.title}}" >
+            <paper-button id="{{index}}" icon="power-settings-new" on-tap="changeHeading" >Edit heading</paper-button>
+            <div class="card-content">
+              {{item.context}}
+            </div>
+            <div class="card-actions">
+              <paper-button>Share</paper-button>
+              <paper-button>Explore!</paper-button>
+            </div>
+          </paper-card>
+          
+          -->
+          
+        </template>
+      </div>
+    </iron-flex-layout>
+    
+    <firebase-query
+        id="query"
+        path="/Article1"
+        data="{{articles}}">
+    </firebase-query>
+    
+    <template is="dom-repeat" items="{{articles}}">
+      <div>
+        Infographic List
+        {{index}}
+      </div>
+      
+    </template>
+    
   </template>
 
   <script>
 
     Polymer({
 
-      is: 'article-list'
+      is: 'article-list',
+      
+      properties: {
+        uid: String,
+        articles: {
+          type: Object,
+          observer: 'dataChanged'
+        }
+      },
+      
+      dataChanged: function(newData, oldData) {
+        // do something when the query returns values
+      },
 
+      changeHeading: function(e) {
+        console.log(e.target.id);
+        this.$$(`#Heading${e.target.id}`).heading = "Yes";
+      }  
     });
 
   </script>

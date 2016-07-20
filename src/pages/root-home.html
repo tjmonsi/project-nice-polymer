@@ -13,23 +13,138 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <dom-module id="root-home">
 
   <template>
-
+  
+  <firebase-query
+    id="query"
+    path="/articles/published"
+    data="{{article}}"
+  >  
+  </firebase-query>
+  
     <style>
+      .inputSize{
+        height: 60px;
+      }
+      .flex-center-align {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+      }
       
     </style>
 
-    <div>
-        Home
-    </div>
+    <template is="dom-repeat" items="{{article}}">
 
+      <paper-card>
+        
+        <paper-material id="{{headId(index)}}" elevation="0" class="inputSize"> 
+          <div class="container flex-center-align">
+            <div>[[item.title]]</div>
+          </div>
+        </paper-material>
+        
+        <template is="dom-if" if="{{mine(item.uid)}}">
+          <paper-input id="{{titleId(index)}}" label="title" name="title" hidden=true value="{{item.title}}"></paper-input>
+        </template>
+        
+        
+        
+        <paper-material id="{{contextId(index)}}" elevation="0" class="inputSize"> 
+          [[item.context]]
+        </paper-material>
+        
+        
+        <template is="dom-if" if="{{mine(item.uid)}}">
+          <paper-input id="{{textId(index)}}" label="context" name="context" hidden=true value="{{item.context}}"></paper-input>
+        </template>
+        <div class="card-actions">
+          <template is="dom-if" if="{{mine(item.uid)}}">
+            <paper-button value="{{index}}" on-click="showMe">
+              <iron-icon id="{{iconId(index)}}" value="{{index}}" icon="create"></iron-icon>
+            </paper-button>
+          </template>
+          <paper-button>Share</paper-button>
+        </div>
+      </paper-card>
+      
+    </template>
+  
   </template>
-
+  
   <script>
-
+    
     Polymer({
 
-      is: 'root-home'
-
+      is: 'root-home',
+      properties: {
+        uid: String,
+        user: {
+          type: Object,
+          notify: true,
+          reflectToAttribute: true,
+          observer: 'updateUser'
+        },
+        data: {
+          type: Object,
+          observer: 'dataChanged'
+        }
+        
+      },
+    
+      ready: function() {
+        console.log("Harder Better Faster Stronger");        
+      },
+    
+      updateUser: function(user) {
+        if (user) {
+          this.uid = user.uid;
+        }
+      },
+      
+      dataChanged: function (newData, oldData) {
+        // do something when the query returns values
+      },
+      
+      mine: function(myId) {
+        return myId === this.uid;
+      },
+      
+      showMe: function(e) {
+        if(this.$$(`#title${e.target.value}`).hidden){
+          this.$$(`#title${e.target.value}`).hidden = false;
+          this.$$(`#text${e.target.value}`).hidden = false;
+          this.$$(`#icon${e.target.value}`).icon = "check";
+          this.$$(`#context${e.target.value}`).hidden = true;
+          this.$$(`#head${e.target.value}`).hidden = true;
+        }else{
+          this.$$(`#title${e.target.value}`).hidden = true;
+          this.$$(`#text${e.target.value}`).hidden = true;
+          this.$$(`#icon${e.target.value}`).icon = "create";
+          this.$$(`#context${e.target.value}`).hidden = false;
+          this.$$(`#head${e.target.value}`).hidden = false;
+        }
+        
+      },
+      
+      titleId: function(idTitle) {
+        return `title${idTitle}`;
+      },
+      
+      textId: function(idText) {
+        return `text${idText}`;
+      },
+      
+      iconId: function(idIcon) {
+        return `icon${idIcon}`;
+      },
+      
+      contextId: function(contextIcon) {
+        return `context${contextIcon}`;
+      },
+      
+      headId: function(contextIcon) {
+        return `head${contextIcon}`;
+      },
+      
     });
 
   </script>
